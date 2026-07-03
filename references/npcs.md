@@ -2,7 +2,18 @@
 
 Use this when creating or reviewing NPCs, monsters, and wandering livings.
 
-Each section carries the distilled API and names its doc page. Verify against the doc when you have access; otherwise this is sufficient.
+## Contents
+
+- Basic Pattern
+- Core Setters
+- Behavior Options
+- Equipment
+- Spells
+- Chats
+- Reactions To What The NPC Sees And Hears (Catch Talk)
+- Wandering Monsters
+- Hooks And Reactions
+- Common Mistakes
 
 ## Basic Pattern
 
@@ -60,6 +71,8 @@ Some modern NPC bases defer behavior wiring to a post-create step (a `create_don
 - `set_gender(n)` — 0 neuter, 1 male, 2 female.
 - `command(cmd)` — force the NPC to perform a command.
 
+For boss-type NPCs, derive hit points from intended fight design (raid size × expected damage per second × fight length) rather than picking a big number, and check `/doc/build/properties` and the area header for combat opt-out properties before hand-rolling special defenses.
+
 ## Behavior Options
 
 > Docs: `/doc/build/monster`
@@ -96,9 +109,7 @@ Built-in spell casting, checked once per combat round:
 - `set_chance(c)` — percent chance per round to cast.
 - `set_spell_dam(d)` — damage is random `0..d-1`.
 - `set_spell_dam_type(t)` — string or array (random pick per hit) from the damage-type list in `combat-gear.md`; defaults to `"blunt"`. Invalid types create system logs.
-- `set_spell_mess1(m)` — message to others in the room; `set_spell_mess2(m)` — message to the victim. Both support `format_message()` codes with `$` = monster, `#` = victim (see `lpc-basics.md`).
-
-For boss-type NPCs, derive hit points from intended fight design (raid size × expected damage per second × fight length) rather than picking a big number, and check `/doc/build/properties` and the area header for combat opt-out properties before hand-rolling special defenses.
+- `set_spell_mess1(m)` — message to others in the room; `set_spell_mess2(m)` — message to the victim. Both support `format_message()` codes with `$` = monster, `#` = victim (codes in `SKILL.md` § Messaging).
 
 ## Chats
 

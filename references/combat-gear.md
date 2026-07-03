@@ -2,7 +2,19 @@
 
 Use this when creating or reviewing weapons, armour, damage types, materials, resistances, protections, wear/wield modifiers, or stat-boosting gear. For generic item behavior (weight, value, ids, get/drop), see `items.md` first.
 
-Each section below carries the distilled API locally and names the doc page it was distilled from. When you have mudlib access, verify against the doc page; when you don't, the facts here are sufficient.
+## Contents
+
+- Weapons
+- Armour And Slot Types
+- Recipe: A Ring
+- Recipe: Stat Gear (Modifiers)
+- Recipe: Gear That Grants Commands While Worn
+- Damage Types
+- Resistance, Protection, Vulnerability
+- Materials
+- Values And Prices
+- Daemon-Generated Gear
+- Common Mistakes
 
 ## Weapons
 
@@ -96,7 +108,7 @@ The complete documented slot table, with each slot's max AC:
 
 Calibration (from `/doc/build/armour.list` — ac/value/weight/type): helmet 1/75/1/helmet, ring of protection 1/200/1/ring, leather jacket 1/30/1/armour, leather armour 2/100/3/armour, chainmail 3/300/4/armour, plate 4/700/6/armour. No armour can be weightless. If weight is one higher than the table, cut price by 1/3; one lower, double it.
 
-Wear/remove messaging — the std armour honours these **properties** (with `#s` replaced by the short description, and `format_message()` codes like `$N`/`$r`/`$o` for the wearer — see `lpc-basics.md`):
+Wear/remove messaging — the std armour honours these **properties** (with `#s` replaced by the short description, and `format_message()` codes like `$N`/`$r`/`$o` for the wearer — codes in `SKILL.md` § Messaging):
 
 ```c
 add_property("wear_msg", "You slip #s onto your finger and feel steadier.\n");
@@ -111,26 +123,7 @@ Hooks: armour fires `__wear` and `__remove`; both blocking — a callback return
 
 ## Recipe: A Ring
 
-A ring is ordinary armour with `set_type("ring")` (max AC 1, one worn at a time):
-
-```c
-inherit AREA_I_ARMOUR;
-
-static void create() {
-    ::create();
-    set_name("copper ring");
-    set_short("a plain copper ring");
-    set_long("A thin band of polished copper.");
-    add_id(({ "ring", "plain copper ring" }));
-    set_type("ring");
-    set_ac(1);              /* or 0 for effect-only rings */
-    set_weight(1);
-    set_value(200);
-    add_property(({ "metal", "copper" }));
-}
-```
-
-Amulets (`set_type("amulet")`), cloaks (`"cloak"`), boots, gloves, and belts follow the identical pattern with their own type and AC cap.
+A ring is ordinary armour: follow the armour pattern above with `set_type("ring")` (max AC 1, one worn at a time), `set_ac(1)` (or 0 for effect-only rings), `set_weight(1)`, a value near the calibration table (ring of protection: 200), and a material property matching the description (e.g. `add_property(({ "metal", "copper" }))`). Amulets (`set_type("amulet")`), cloaks (`"cloak"`), boots, gloves, and belts follow the identical pattern with their own type and AC cap.
 
 ## Recipe: Stat Gear (Modifiers)
 
@@ -170,7 +163,7 @@ Think of `maxvalue` as "the cap my object imposes on its whole class": generous 
 
 ## Recipe: Gear That Grants Commands While Worn
 
-Give the wearer a command path (a directory of command files — see `commands.md`) in the `__wear` hook and remove it in `__remove`, with `__destroy` routed through the same teardown. Armour `__wear`/`__remove` are blocking hooks: return 0 to allow the action.
+Give the wearer a command path (a directory of command files — see `commands.md`) in the `__wear` hook and remove it in `__remove`. Armour `__wear`/`__remove` are blocking hooks: return 0 to allow the action.
 
 ```c
 inherit AREA_I_ARMOUR;
@@ -180,8 +173,8 @@ static void create() {
     /* ... normal ring/amulet setup ... */
     add_hook("__wear", store_fp("on_wear"));
     add_hook("__remove", store_fp("on_remove"));
-    add_hook("__destroy", store_fp("on_destroy"));
     add_hook("__move", store_fp("on_move"));
+    add_hook("__destroy", store_fp("on_destroy"));
 }
 
 static int on_wear(int silent) {
@@ -199,18 +192,9 @@ static int on_remove(int silent) {
     }
     return 0;
 }
-
-static void on_move(object from, object to) {
-    /* dropping/selling while worn must also revoke */
-    if (objectp(from)) {
-        from->remove_cmdpath(AREA_DIR_COM_RING);
-    }
-}
-
-static void on_destroy() {
-    on_move(environment(), 0);
-}
 ```
+
+A worn item can also leave its holder without a remove event (drop, give, sale, destruction), so revoke in `__move`/`__destroy` too: implement `on_move(from, to)` revoking the cmdpath from `from`, and route `on_destroy` through it — the carried-item pattern in `commands.md`, minus the grant-on-`to` branch (granting stays in `on_wear`).
 
 For a single verb, skip the command path and use `add_trigger("verb", store_fp("do_verb"))` on the item — the trigger only works while the item is present, so no revocation is needed. Gate the trigger's handler on `query_worn()` if it must require wearing. See `commands.md` for command files, `CMD_ACCESS.c`, and the carried-(not-worn)-item variant of this pattern.
 
@@ -275,7 +259,7 @@ No shop pays more than 1000 coins. Items should never be worth more than 5000 �
 
 ## Daemon-Generated Gear
 
-Modern areas centralize randomized gear in quality-driven factory daemons that compute type/class/AC/weight/value from a quality score (typically 0–100, above 100 adding enchantments), and follow a naming convention: `create_<thing>(quality)` returns the object; `add_<thing>(quality, type, ply)` creates **and equips** it on a living (defaulting to `previous_object()`), choosing e.g. one-handed weapons when a shield is worn. Use the area's gear daemons for random loot and standard NPC equipment; hand-code unique items only when fixed behavior and descriptions matter. See `daemons.md`.
+Modern areas centralize randomized gear in quality-driven factory daemons (naming convention and API design in `daemons.md`) that compute type/class/AC/weight/value from a quality score (typically 0–100, above 100 adding enchantments); the equipping form chooses sensibly, e.g. a one-handed weapon when a shield is worn. Use the area's gear daemons for random loot and standard NPC equipment; hand-code unique items only when fixed behavior and descriptions matter.
 
 ## Common Mistakes
 

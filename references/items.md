@@ -2,7 +2,18 @@
 
 Use this when creating or reviewing carryable items, containers, food, drink, torches, and object descriptions. For weapons and armour, see `combat-gear.md`.
 
-Each section carries the distilled API and names its doc page. Verify against the doc when you have access; otherwise this is sufficient.
+## Contents
+
+- Basic Item Pattern
+- Description And IDs
+- Weight, Value, Get, Drop
+- Containers
+- Food
+- Drink
+- Light Sources
+- Auto-Load Items
+- Daemon-Generated Items
+- Common Mistakes
 
 ## Basic Item Pattern
 
@@ -122,7 +133,7 @@ Same economy rules as food. Key setters:
 - `set_heal(h)` — sets both `set_hp_heal(h)` and `set_sp_heal(h)`; or set them separately per drink.
 - `set_strength(s)` — how drunk it makes the drinker; `set_soft_strength(s)` — how much it soaks. Rule of thumb: a drink healing 40 should have strength/soft_strength around 40.
 - `set_full(n)` / `set_maxfull(n)` — drinks remaining / bottle capacity (both default 1). `query_value()` scales with `full/maxfull`.
-- `set_drinker_mess(m)` / `set_drinking_mess(m)` — messages to drinker / room; support `format_message()` codes with `$` for the drinker (see `lpc-basics.md`).
+- `set_drinker_mess(m)` / `set_drinking_mess(m)` — messages to drinker / room; support `format_message()` codes with `$` for the drinker (codes in `SKILL.md` § Messaging).
 - `set_empty_container(e)` — name/id of the empty vessel.
 - Drinks fire blocking `__drink` (and livings `__drink_alco` for alcohol). Add `prevent_insert` to forbid bagging.
 
@@ -157,7 +168,7 @@ public void init_arg(string arg) {
 
 ## Daemon-Generated Items
 
-Modern areas often create families of items through quality-driven daemons, conventionally `create_<thing>(quality)` (returns the object) vs `add_<thing>(quality, ...)` (creates and moves/equips it). Use daemon helpers for random loot and standardized gear; hand-code unique/story items when fixed behavior and descriptions matter. See `daemons.md` and `combat-gear.md`.
+Modern areas often create families of items through quality-driven factory daemons (naming convention and API design in `daemons.md`). Use daemon helpers for random loot and standardized gear; hand-code unique/story items when fixed behavior and descriptions matter. For gear specifics, see `combat-gear.md`.
 
 ## Common Mistakes
 

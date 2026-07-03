@@ -2,7 +2,17 @@
 
 Use this when creating or reviewing rooms, doors, boards, and shops.
 
-Each section carries the distilled API and names its doc page. Verify against the doc when you have access; otherwise this is sufficient.
+## Contents
+
+- Basic Pattern
+- Exits
+- Reset Objects
+- Items, Triggers, And Canned Refusals
+- Dynamic Descriptions
+- Doors
+- Boards And Shops
+- Content Rules That Apply To Rooms
+- Common Mistakes
 
 ## Basic Pattern
 

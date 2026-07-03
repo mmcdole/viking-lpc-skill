@@ -1,8 +1,17 @@
 # Hooks, Triggers, And Callbacks
 
-Use this when adding or reviewing `add_hook`, `remove_hook`, `hook`, `bhook`, `add_trigger`, function-pointer descriptions, movement callbacks, inventory callbacks, or cleanup code.
+Use this when adding or reviewing `add_hook`, `remove_hook`, `hook`, `bhook`, `add_trigger`, function-pointer descriptions, movement callbacks, inventory callbacks, or cleanup code. Also useful: nearby modern hook users in the target area — extract the lifecycle pattern; do not copy area names or paths.
 
-Each section carries the distilled facts and names its doc page. Verify against the doc when you have access (per-hook pages live under `/doc/hooks/__*`); otherwise this is sufficient. Also useful: nearby modern hook users in the target area — extract the lifecycle pattern; do not copy area names or paths.
+## Contents
+
+- Hook Kinds
+- Hook Catalog
+- Adding Hooks
+- Cleanup Rule
+- Common Hook Patterns
+- Triggers Versus Hooks
+- Callback Guardrails
+- Common Mistakes
 
 ## Hook Kinds
 
@@ -128,18 +137,11 @@ static void on_move(object from, object to) {
 }
 ```
 
-Inventory logging:
+Inventory tracking — the same pair covers container contents logging and room enter/leave behavior (a room is a container of livings):
 
 ```c
 add_hook("__enter_inv", store_fp("on_enter_inv"));
 add_hook("__leave_inv", store_fp("on_leave_inv"));
-```
-
-Room enter/leave behavior:
-
-```c
-add_hook("__enter_inv", store_fp("on_enter"));
-add_hook("__leave_inv", store_fp("on_leave"));
 ```
 
 Short/long annotations:

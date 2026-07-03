@@ -2,7 +2,17 @@
 
 Use this when creating or reviewing daemons, shared services, registries, generators, logging helpers, or persistent/service objects.
 
-Each section carries the distilled API and names its doc page. Verify against the doc when you have access; otherwise this is sufficient.
+## Contents
+
+- Core Pattern
+- Header Integration
+- API Design
+- Registries
+- Persistence
+- Area Bootstrap Objects ("Castles")
+- Logging
+- Reset And Heartbeat
+- Common Mistakes
 
 ## Core Pattern
 
@@ -38,17 +48,7 @@ public string query_label(int value) {
 }
 ```
 
-Multi-inherit daemon:
-
-```c
-inherit base I_DAEMON;
-inherit util AREA_I_UTIL;
-
-static void create() {
-    base::create();
-    util::create();
-}
-```
+For multi-inherit daemons, label each inherit and chain every inherited `create()` (pattern in `SKILL.md` § Create Pattern).
 
 If inheriting an area daemon std class, inspect it before overriding `create`, `reset`, `heart_beat`, or destruction behavior. Some area daemon bases combine utility, hooks, base daemon behavior, and destroy behavior.
 

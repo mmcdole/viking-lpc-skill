@@ -2,8 +2,6 @@
 
 Use this when designing, implementing, or reviewing a quest, miniquest, or reward-giving scenario.
 
-Each section carries the distilled API and names its doc page. Verify against the doc when you have access; otherwise this is sufficient.
-
 ## Design Rules
 
 > Docs: `/doc/build/quest`
@@ -83,7 +81,7 @@ The tested shape for a quest implementation:
 
 - Quest state that must survive within a reset lives in the area's objects; anything that must survive across resets lives in a daemon or on the player (flags, the quest itself).
 - One registered quest file owns completion detection and calls `set_quest` + rewards; every other object feeds it through normal gameplay (items handed in, monsters killed, triggers pulled).
-- Keep hints discoverable in-game (an NPC, a readable, the guild hint) — see the no-deadly-traps and telegraphing rules in `lpc-basics.md`.
+- Keep hints discoverable in-game (an NPC, a readable, the guild hint) — see the no-deadly-traps and telegraphing rules in `SKILL.md` § QC Ground Rules.
 
 ## Common Mistakes
 

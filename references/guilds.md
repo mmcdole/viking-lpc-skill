@@ -2,8 +2,6 @@
 
 Use this when creating, extending, or reviewing a guild. Guilds are multi-object subsystems, not single files: expect a guild master, guild rooms, member commands, and often boards, shadows, and spells/skills.
 
-Each section carries the distilled API and names its doc page. Verify against the doc when you have access; otherwise this is sufficient.
-
 ## Three Interfaces To Coordinate
 
 > Docs: `/doc/build/guild` (guild-master callbacks — read it fully before starting), `/doc/lfun/daemons/guild_d`

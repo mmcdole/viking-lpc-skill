@@ -2,7 +2,13 @@
 
 Use this when adding player-facing verbs beyond simple room/object triggers: command files, command directories granted to players, or guild/member command sets.
 
-Each section carries the distilled API and names its doc page. Verify against the doc when you have access; otherwise this is sufficient.
+## Contents
+
+- Choosing The Mechanism
+- Command Modules
+- Command Paths
+- Granting And Revoking From A Carried Item
+- Common Mistakes
 
 ## Choosing The Mechanism
 
