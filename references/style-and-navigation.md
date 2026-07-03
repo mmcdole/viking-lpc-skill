@@ -5,18 +5,19 @@
 Current, useful roots:
 
 - `/std/`: core inherits such as `object.c`, `item.c`, `room.c`, `monster.c`, `daemon.c`, `weapon.c`, `armour.c`, `container.c`, and modules under `/std/mod/`.
-- `/std/include/`: standard headers. `mudlib.h` and `std.h` provide common `I_*` constants.
-- `/doc/build/`: current builder docs for room, object, monster, item, weapon, armour, container, headers, logging, hooks, etc.
-- `/doc/examples/`: current examples to compare against.
+- `/std/include/`: standard headers. `mudlib.h` and `std.h` provide common `I_*` constants; see `/doc/build/header` for the full catalog of standard include files (`<levels.h>`, `<colours.h>`, `<origin.h>`, ...). Note: that doc covers **standard include files**, not area headers — the area-header convention below is a modern-area idiom.
+- `/doc/build/`: current builder docs for room, object, monster, item, weapon, armour, container, logging, damage, materials, modifiers, doors, quests, etc. `/doc/build/GUIDELINES` holds the QC ground rules — read it once (distilled in `lpc-basics.md`).
+- `/doc/examples/`: current examples to compare against (`room/`, `item/`, `weapon/`, `modifier/`, `unique/`, `autoload/`, `container/`, `guild/`, `boards/`).
 - `/doc/concepts/`: LPC and object model background.
-- `/doc/lfun/`: callable object APIs by subsystem.
+- `/doc/lfun/`: callable object APIs by subsystem (including `/doc/lfun/daemons/`).
+- `/doc/sfun/`: driver/simulated efuns (`types/store_fp`, `string/format_message`, ...).
 - `/doc/hooks/`: hook names and behavior.
 - Modern complete areas: use as source material when current docs are not enough, then generalize the pattern to the target area.
 - `/attic/doc/`: old docs. Read only when current docs/code do not answer the question, then verify against current code.
 
 ## Area Organization
 
-Modern areas centralize paths and inherit names in a single header, built so the area is relocatable:
+Modern areas centralize paths and inherit names in a single header, built so the area is relocatable. This is a convention extracted from well-maintained areas, not a core doc:
 
 - Use an include guard and pull in the mudlib headers the area needs.
 - Define one root macro and compose every other path from it, never repeating a literal path:
@@ -43,7 +44,7 @@ A typical area directory layout mirrors the mudlib, relative to the area root: `
 ## Extracted Coding Conventions
 
 - One include block at the top, usually the local area header.
-- Inherit through constants when a local header provides them.
+- Inherit through constants when a local header provides them; never hardcode `/std/` paths (QC rule).
 - Use named inherited labels for multiple inheritance when needed:
 
 ```c
@@ -72,17 +73,7 @@ static void create() {
 - Use `restore_object()` and `save_object()` only in daemons or objects that clearly own persistent state.
 - Put player-facing commands under an area command directory and grant the command path from a carried item or room when appropriate.
 - When an item adds hooks or command paths to a player, remove them in move/destroy cleanup.
-- Match local indentation and brace style. Existing modern areas are not uniform.
-
-## Current Documentation To Prefer
-
-- Headers: `/doc/build/header`
-- Inherit overview: `/doc/build/inherit_tree`
-- Object basics: `/doc/build/object`
-- Logging: `/doc/build/logging`
-- Properties: `/doc/build/properties`
-- Hooks: `/doc/hooks/hook`, `/doc/hooks/hooklist`
-- LPC: `/doc/concepts/lpc`, `/doc/learn_lpc/`
+- Match local indentation and brace style. Existing modern areas are not uniform, but unindented code fails QC.
 
 ## Documentation Culture
 
@@ -92,10 +83,10 @@ Well-maintained areas keep living documents; follow the convention when editing 
 - `README`: onboarding for other wizards (what the area is, local tooling, where docs live).
 - `QC.*` files: the quality-control review dialogue with resolutions marked inline. Read them — they encode what reviewers care about (headers over hardcoded paths, shared guard helpers, cleanup symmetry).
 - `help/` man pages for area tooling; add one when adding a command.
-- Quests are registered as data plus a grant call: quest metadata lives in a data file, and the object grants with `ply->set_quest(name)` guarded by `!ply->query_quests(name)` — see `/doc/build/quest` and `/doc/build/qpsystem`.
 
 ## Quality Checks
 
 - Read `QC.Notes` or `QC.NOTES` in the area if present.
 - Check area `CHANGES`, `README`, and `TODO` for intent.
+- Check the change against `/doc/build/GUIDELINES` (distilled in `lpc-basics.md`).
 - For runtime/compile problems, current logging docs point to `~/log/compile.err`, `~/log/runtime.err`, and domain logs. Use in-mud commands such as `errors`, `err`, `deb`, and `dbg` when available.

@@ -1,21 +1,12 @@
-# Items
+# Items, Containers, Food, Drink, And Light Sources
 
-Use this when creating or reviewing carryable items, food, drink, containers, torches, and object descriptions. For weapons and armour, see `combat-gear.md`.
+Use this when creating or reviewing carryable items, containers, food, drink, torches, and object descriptions. For weapons and armour, see `combat-gear.md`.
 
-## Current References
-
-- `/doc/build/item`
-- `/doc/build/object`
-- `/doc/build/container`
-- `/doc/build/food`
-- `/doc/build/drinks`
-- `/doc/build/prices`
-- `/doc/examples/item/`
-- `/doc/examples/autoload/`
-- `/std/item.c`, `/std/container.c`
-- Nearby modern items and item-generation daemons in the target area or a similar modern area.
+Each section carries the distilled API and names its doc page. Verify against the doc when you have access; otherwise this is sufficient.
 
 ## Basic Item Pattern
+
+> Docs: `/doc/build/item`, `/doc/build/object`; source `/std/item.c`; examples `/doc/examples/item/`
 
 ```c
 #include "/path/to/area/header.h"
@@ -34,48 +25,118 @@ static void create() {
 }
 ```
 
-For simple local objects, match the local inherit. Some modern objects inherit core specialized classes directly, e.g. `I_TORCH`, when that is the correct behavior.
+For simple local objects, match the local inherit. Some modern objects inherit core specialized classes directly (e.g. `I_TORCH`) when that is the correct behavior.
 
 ## Description And IDs
 
-- `set_name` gives the object its base name and default descriptions.
-- `set_short` controls room/inventory display.
-- `set_long` controls examine text.
-- `add_id` adds alternate player-visible names.
-- `add_item` can add inspectable sub-parts to an object.
-- `set_read` is for text read with `read <id>`.
-- `set_info` is for hidden info.
+> Docs: `/doc/build/object` (the full `add_item`/`add_id`/trigger API lives on `/std/object.c` and is shared by items, rooms, and NPCs)
 
-Use ids that players will naturally try, including adjective+noun forms from the short description.
+- `set_name(n)` — base name; also sets short and a default long.
+- `set_short(s)` — room/inventory display; also defaults long to short + ".\n".
+- `set_long(l)` — examine text.
+- `add_id(n)` / `remove_id(n)` — alternate player-visible names; string or array. Include the adjective+noun forms players will try from the short description.
+- `set_read(str)` — text for `read <id>`. `set_info(str)` — hidden info.
+- `id(s)` returns 1 for any added id or item-id.
+
+`add_item` adds inspectable sub-parts, optionally with actions. Four documented forms:
+
+```c
+add_item(id, desc);                              /* look-only            */
+add_item(({ ids1, desc1, ids2, desc2 }));        /* several at once      */
+add_item(ids, desc, verbs, action);              /* verbs invoke action  */
+add_item(id, desc, ({ verb1, act1, verb2, act2 }));  /* several actions  */
+```
+
+`desc` and `action` may be strings or function pointers (`store_fp("func")`). A string action is printed; a function action is called with the id as argument. A description **function must return a string** — returning 1 prints "1".
+
+Triggers add room/inventory verbs scoped to the object's presence:
+
+```c
+add_trigger("rub", store_fp("do_rub"));
+
+static int do_rub(string arg) {
+    if (!stringp(arg) || !id(arg)) {
+        return notify_fail("Rub what?");
+    }
+    write("The token warms briefly in your palm.\n");
+    say(this_player()->query_name() + " rubs a brass token.\n");
+    return 1;
+}
+```
+
+`remove_trigger(verb)` removes one. Triggers disappear with the object — no cleanup needed.
 
 ## Weight, Value, Get, Drop
 
-From `/doc/build/item`:
+> Docs: `/doc/build/item`
 
-- `set_weight(int|function)` and `query_weight()`
-- `set_value(int|function)` and `query_value()`
-- `set_get(int|function)` for whether the item can be picked up.
-- `set_drop(int|function)` for whether the item can be dropped.
+- `set_weight(int|function)` / `query_weight()` — never change the weight of an item while a player carries it.
+- `set_value(int|function)` / `query_value()`.
+- `set_get(int|function)` — 1 = can be picked up (default), 0 = cannot. You can also define `get()` for side effects on pickup.
+- `set_drop(int|function)` — note the inverted sense: **0 = can be dropped (default), 1 = cannot**. Or define `drop()`; worn/wielded items are removed/unwielded there.
 
-Do not change an item weight while it is carried unless the local code already handles that safely.
+Keep values consistent with `/doc/build/prices`: no shop pays more than 1000 coins; items should never be worth more than 5000.
 
-Keep values consistent with `/doc/build/prices`: no shop pays more than 1000 coins, and items should never be worth more than 5000.
+## Containers
 
-## Specialized Items
+> Docs: `/doc/build/container`; source `/std/container.c`
 
-Choose the most specific inherit:
+- `set_max_weight(n)` / `query_max_weight()` — carrying capacity.
+- `set_can_open(status)` — whether it can be opened/closed at all (initially closed); `set_open()` / `set_closed()`; `query_open()` / `is_open()`.
+- Containers fire blocking `__open`/`__close` hooks; local container classes often add a `prevent_enter(obj)` guard — return 1 to refuse an insertion (write your own refusal message).
+- The property `prevent_insert` on a **drink or item** stops players putting it inside containers.
 
-- Weapon: `I_WEAPON` or local weapon class — see `combat-gear.md`.
-- Armour: `I_ARMOUR` or local armour class — see `combat-gear.md`.
-- Container: `I_CONTAINER` or local container class.
-- Food/drink: `I_FOOD`, `I_DRINK`.
-- Light source: `I_TORCH`.
+## Food
 
-Read the matching `/doc/build/*` page and one local example before setting combat or consumption values.
+> Docs: `/doc/build/food`; economy rules also in `/doc/build/GUIDELINES` (rule 6)
+
+```c
+inherit AREA_I_FOOD;   /* I_FOOD inherits I_ITEM */
+
+static void create() {
+    ::create();
+    set_name("honey cake");
+    set_short("a honey cake");
+    add_id("cake");
+    set_weight(1);
+    set_value(90);          /* from the cost formula below */
+    set_strength(20);       /* hp healed when eaten */
+    set_doses(1);
+    set_eater_mess("You eat the honey cake. It is sticky and delicious.\n");
+}
+```
+
+- `set_strength(n)` — hp healed on eating (0 for pure flavour food). Typically should not exceed 50.
+- `set_doses(i)` / `set_max_doses(i)` — how many times it can be eaten.
+- `set_eater_mess(m)` — message to the eater.
+- Food fires the blocking `__eat` hook.
+
+**Healing economy rules (enforced by QC):** sold healing must cost `4*x + x*x/10` coins for `x` hp; at most 3000 hp of healing sold per reset per establishment, at most 200 hp to one customer per reset; healing items must weigh at least 1. Free healing items are only allowed if they heal at most 20, are destructed on use, and at most one is generated per room per reset.
+
+## Drink
+
+> Docs: `/doc/build/drinks`; source `/std/drink.c`
+
+Same economy rules as food. Key setters:
+
+- `set_heal(h)` — sets both `set_hp_heal(h)` and `set_sp_heal(h)`; or set them separately per drink.
+- `set_strength(s)` — how drunk it makes the drinker; `set_soft_strength(s)` — how much it soaks. Rule of thumb: a drink healing 40 should have strength/soft_strength around 40.
+- `set_full(n)` / `set_maxfull(n)` — drinks remaining / bottle capacity (both default 1). `query_value()` scales with `full/maxfull`.
+- `set_drinker_mess(m)` / `set_drinking_mess(m)` — messages to drinker / room; support `format_message()` codes with `$` for the drinker (see `lpc-basics.md`).
+- `set_empty_container(e)` — name/id of the empty vessel.
+- Drinks fire blocking `__drink` (and livings `__drink_alco` for alcohol). Add `prevent_insert` to forbid bagging.
+
+## Light Sources
+
+> Docs: `/doc/build/object` (`set_light`); source `/std/torch.c`
+
+`set_light(n)` on any object makes it shine with strength n and correctly updates the `light` property. Burnable torches inherit `I_TORCH`. Rooms default to light 0 (darkness) — see `rooms.md`.
 
 ## Auto-Load Items
 
-Items that should survive in a player's inventory across logout implement the auto-load pair (see `/doc/examples/autoload/`):
+> Examples: `/doc/examples/autoload/`
+
+Items that survive in a player's inventory across logout implement the auto-load pair:
 
 ```c
 public string query_auto_load() {
@@ -96,36 +157,14 @@ public void init_arg(string arg) {
 
 ## Daemon-Generated Items
 
-Modern areas often create families of items through daemons. Keep that behavior centralized:
-
-- `AREA_D_CONTAINER->create_container(quality)`
-- `AREA_D_WEAPON->add_weapon(quality)`
-- `AREA_D_ARMOUR->add_armour(quality)`
-
-Use daemon helpers when creating random loot or standardized area gear. Hand-code unique/story items when fixed behavior and fixed descriptions matter.
-
-## Interactive Items
-
-Use triggers or `add_item` actions rather than raw ad hoc command wiring:
-
-```c
-add_trigger("rub", store_fp("do_rub"));
-
-int do_rub(string arg) {
-    if (arg != "token" && arg != "brass token") {
-        return notify_fail("Rub what?");
-    }
-    write("The token warms briefly in your palm.\n");
-    return 1;
-}
-```
-
-For function descriptions, return a string, not `1`.
+Modern areas often create families of items through quality-driven daemons, conventionally `create_<thing>(quality)` (returns the object) vs `add_<thing>(quality, ...)` (creates and moves/equips it). Use daemon helpers for random loot and standardized gear; hand-code unique/story items when fixed behavior and descriptions matter. See `daemons.md` and `combat-gear.md`.
 
 ## Common Mistakes
 
 - Missing ids for words in the short description.
-- Using raw `I_ITEM` when an inherited specialized class already exists.
+- An `add_item`/description function returning `1` instead of a string.
+- Getting `set_drop` backwards (1 means *cannot* drop).
 - Forgetting `::create()`.
-- Setting unrealistic weight/value compared to nearby items.
+- Healing food/drink priced below the `4*x + x*x/10` formula or exceeding the per-reset caps.
+- Changing weight while carried; weightless items.
 - Duplicating randomized item generation that an area daemon already centralizes.

@@ -2,19 +2,11 @@
 
 Use this when adding or reviewing `add_hook`, `remove_hook`, `hook`, `bhook`, `add_trigger`, function-pointer descriptions, movement callbacks, inventory callbacks, or cleanup code.
 
-## Current References
-
-- `/doc/hooks/hooks.about`
-- `/doc/hooks/hook`
-- `/doc/hooks/hooklist`
-- Specific hook docs under `/doc/hooks/__*`
-- `/doc/lfun/object/add_hook`
-- `/doc/lfun/object/remove_hook`
-- `/doc/lfun/object/query_hook`
-- `/std/mod/hook.c`
-- Nearby modern hook users in the target area or a similar modern area. Extract the lifecycle pattern; do not copy area names or paths.
+Each section carries the distilled facts and names its doc page. Verify against the doc when you have access (per-hook pages live under `/doc/hooks/__*`); otherwise this is sufficient. Also useful: nearby modern hook users in the target area — extract the lifecycle pattern; do not copy area names or paths.
 
 ## Hook Kinds
+
+> Docs: `/doc/hooks/hooks.about`, `/doc/hooks/hook`; source `/std/mod/hook.c`
 
 Hooks named `__b...` are blocking hooks. Other hooks are notification hooks.
 
@@ -27,19 +19,25 @@ Read the specific hook doc before writing the callback. The callback signature m
 
 ## Hook Catalog
 
-Distilled from `/doc/hooks/hooklist`; hooks marked `*` also have a blocking `__b<name>` variant. Hooks are inherited down the class tree (a monster has all living and object hooks). Callback signatures differ per hook — check the per-hook doc under `/doc/hooks/` when available.
+> Docs: `/doc/hooks/hooklist` (verified against the live list); per-hook pages under `/doc/hooks/`
+
+Hooks marked `*` also have a blocking `__b<name>` variant. Hooks are inherited down the class tree (a monster has all living and object hooks). Callback signatures differ per hook — check the per-hook doc when available.
 
 - **All objects** (`I_OBJECT`): `__destroy`, `__enter_inv`, `__leave_inv`, `__init`, `__move`, `__reset`, `__short`, `__long`*
 - **Livings** (`I_LIVING`) add: `__attack`*, `__add_hit_exp`*, `__add_money`, `__choose_killer`, `__choose_target`, `__damage_dealt`, `__damage_done`, `__die`, `__kill`, `__hit_player`, `__reduce_hit_point`, `__fight_beat`, `__peace_beat`, `__flee`*, `__move_player`*, `__give`, `__heart_beat`, `__eat`*, `__drink`*, `__drink_alco`, `__wear`*, `__wield`*, `__remove`*, `__open`, `__close`, `__receive`, `__receive_feeling`*, `__do_feeling`, `__feeling_occurred`, `__query_skill`, `__set_alignment`, `__restore_spell_points`, and blocking-only guards `__btest_dark`, `__btoodrunk`, `__btoosoaked`, `__btoostuffed`, `__bnotify_attack`, `__bnotify_attacking`, `__bbusy_next_round`
 - **Monsters** add: `__beat_stopped`, `__catch_tell`; wandering monsters add `__wander`*, `__wander_done`, `__wander_fail`
 - **Players** add: `__quit`, `__reenter`, `__linkdead`*, `__look`, `__invis`, `__vis`, `__quest`, `__query_exit`, `__query_visible_exits`, `__set_dead`, `__add_alignment`, `__bal_title`, `__bprompt`, `__short`*
-- **Items** add: `__break`*, `__drop`*, `__get`*, `__wear_out`*, `__info`; armour: `__wear`*, `__remove`*; containers and doors: `__open`*, `__close`*; food: `__eat`*; drink: `__drink`*; weapons: `__weapon_hit`*, `__wield`*, `__remove`*, `__damage_type`
+- **Items** add: `__break`*, `__drop`*, `__get`*, `__wear_out`*, `__info`; armour: `__wear`*, `__remove`*; containers and doors: `__open`*, `__close`*; corpses: `__set_alignment`; food: `__eat`*; drink: `__drink`*; weapons: `__weapon_hit`*, `__wield`*, `__remove`*, `__damage_type`
 - **Rooms**: `__feeling_occurred`, `__perform_move`*
 - **Channel daemon**: `__chat`
 
 This catalog is a snapshot — when you have mudlib access, confirm against the live `/doc/hooks/hooklist`.
 
+Blocking-hook silence caveat: for armour `__wear`/`__remove` and weapon `__wield`/`__remove`, a callback returning 1 blocks the action but **no message is produced automatically** — telling the player why is the coder's responsibility (per `/doc/build/armour` and `/doc/build/weapon`).
+
 ## Adding Hooks
+
+> Docs: `/doc/lfun/object/add_hook`, `/doc/lfun/object/remove_hook`, `/doc/lfun/object/query_hook`
 
 Common local style:
 

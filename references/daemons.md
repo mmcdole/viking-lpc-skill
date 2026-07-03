@@ -2,16 +2,11 @@
 
 Use this when creating or reviewing daemons, shared services, registries, generators, logging helpers, or persistent/service objects.
 
-## Current References
-
-- `/std/daemon.c`
-- `/std/save_daemon.c`
-- `/doc/build/logging`
-- `/doc/build/registry`
-- `/doc/lfun/daemons/`
-- Nearby modern daemons in the target area or a similar modern area.
+Each section carries the distilled API and names its doc page. Verify against the doc when you have access; otherwise this is sufficient.
 
 ## Core Pattern
+
+> Source: `/std/daemon.c`, `/std/save_daemon.c`
 
 Basic mudlib daemon:
 
@@ -46,8 +41,6 @@ public string query_label(int value) {
 Multi-inherit daemon:
 
 ```c
-#include "/path/to/area/header.h"
-
 inherit base I_DAEMON;
 inherit util AREA_I_UTIL;
 
@@ -75,11 +68,24 @@ Match existing naming and alignment in the target area's header.
 - Keep helper methods `private` or `static` unless callers need them.
 - Validate callers and objects with `objectp`, `living`, `stringp`, etc.
 - Return `0` on invalid input when the API is used programmatically; use `notify_fail` only when directly handling a player command.
-- Centralize randomized generation here if multiple objects need the same item/NPC/material logic.
-- Avoid hidden side effects unless method names make them obvious, e.g. `create_container` returns an object while `add_container` creates and moves it.
+- Centralize randomized generation here if multiple objects need the same item/NPC/material logic. Follow the modern naming convention: `create_<thing>(quality)` returns an object; `add_<thing>(quality, ...)` creates **and** moves/equips it (typically defaulting the target to `previous_object()`).
 - Split one service per concern: a rental/state registry, an object-location tracker, a statistics sink, and a logging facade are four daemons, not one.
 - Small stateless predicate daemons compose well with `filter_array(arr, "is_valid", D_FILTER, extra)` — collection logic stays declarative and testable.
 - Larger areas sometimes split the logic into a reusable std class and keep the daemon file as a thin concrete instance that only sets paths; follow that split where the area already uses it.
+
+## Registries
+
+> Docs: `/doc/build/registry`; source `/std/registry.c` (`I_REGISTRY`)
+
+For list-shaped persistent data (up to roughly 10k entries), inherit `I_REGISTRY` and override `do_save`/`do_restore` (wrapping `save_object`/`restore_object` on your save path). Entries are mappings; the registry assigns a unique `"id"` key.
+
+- `int insert(mapping data)` — returns the assigned id.
+- `void update(int id, mapping data)` — merges keys; use `clear_field(id, key)` to remove a key (you cannot set 0 through `update`).
+- `void delete(int id)`.
+- Queries: `query_all()`, `query_exact(mapping)` (AND, exact), `query_search(mapping)` (AND, substring for strings / exact for ints), `query(function f)` (filter predicate).
+- Aggregation: `stats(field)` counts values of a field; `stats_query(field, criteria)` counts with a filter.
+
+Prefer a registry over hand-rolled parallel arrays/mappings when entries have several fields or need searching.
 
 ## Persistence
 
@@ -91,13 +97,17 @@ Give every piece of persistent state exactly one owning daemon:
 - A daemon that restores state but never saves it is a latent bug: state silently resets every reboot. Keep restore and save symmetric.
 - Player-carried persistence belongs on the item itself via auto-load (see `items.md`), not in a daemon.
 
-## Area Bootstrap Objects
+## Area Bootstrap Objects ("Castles")
 
-An area's entry wiring (a "castle" file, per `/doc/build/castle`) is a preloaded daemon registered by an arch in the boot init file. It loads the area's entry room and grafts exits into the outside world on load. Undo in `on_destruct` any wiring you install in another object — add the exit on load, remove it on destruct.
+> Docs: `/doc/build/castle`
+
+An area's entry wiring is a preloaded file (historically a wizard's "castle"): an `I_DAEMON` registered by an arch in `/secure/etc/init_file`, which on load brings up the area's entry room and grafts exits/descriptions into the outside world. Undo in `on_destruct` any wiring you install in another object — add the exit on load, remove it on destruct.
 
 ## Logging
 
-Use `log_file()` or area logging helpers for durable diagnostics. Current logging guidance in `/doc/build/logging` says:
+> Docs: `/doc/build/logging`
+
+Use `log_file()` or area logging helpers for durable diagnostics. Current logging guidance:
 
 - Log only what you plan to use.
 - Always log errors.

@@ -24,4 +24,6 @@ The agent loads `SKILL.md` automatically when LPC/VikingMUD work comes up, and p
 ## Layout
 
 - `SKILL.md` — entry point: workflow, source priority, house style.
-- `references/` — one file per topic: rooms, NPCs, items, combat gear, daemons, guilds, commands, hooks, LPC basics, style and navigation.
+- `references/` — one file per topic: rooms, NPCs, items, combat gear, daemons, guilds, commands, hooks, quests, LPC basics, style and navigation.
+
+Each reference section embeds the distilled API (signatures, enforced limits, calibration tables, recipes) locally and opens with a `> Docs:` line naming the mudlib page it was distilled from — so the agent can work with no mudlib access and validate when it has some.
